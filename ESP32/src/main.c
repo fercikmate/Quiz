@@ -11,8 +11,8 @@
 #define BUTTON_GPIO33 33 // Button
 #define BUTTON_GPIO32 32 // Button
 
-const gpio_num_t button_gpios[] = {BUTTON_GPIO27, BUTTON_GPIO33,
-                                   BUTTON_GPIO26, BUTTON_GPIO25, BUTTON_GPIO32};
+const gpio_num_t button_gpios[] = {BUTTON_GPIO27, BUTTON_GPIO26,
+                                   BUTTON_GPIO25, BUTTON_GPIO33, BUTTON_GPIO32};
 #define NUM_BUTTONS (sizeof(button_gpios) / sizeof(button_gpios[0]))
 
 // Bitmask to track which buttons have been pressed

@@ -272,7 +272,7 @@ def show_main_window():
         try:
             if ser and ser.is_open and ser.in_waiting > 0:  # Check if data is available
                 line = ser.readline().decode('utf-8', errors='ignore').strip()
-                if line:
+                if line and timer_running:
                     try:
                         number = int(line)
                         # If number is 1-x, stamp that team's time
