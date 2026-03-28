@@ -7,6 +7,7 @@ import time
 #TODO reconnect serial if disconnected
 #TODO add sound effects on buzz/reset
 #TODO add keyboard shortcuts for stop/resume and reset
+#TODO add visual effects on buzz (flash team color, etc)
 
 # Global configuration variables
 com = 'COM4'
