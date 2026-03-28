@@ -308,6 +308,15 @@ def show_main_window():
     def on_click_reset():
         """Reset timer and all team timestamps"""
         nonlocal start_time, team_timestamps, timer_running, paused_elapsed, buzz_order
+        
+        # Send reset signal to ESP32
+        try:
+            if ser and ser.is_open:
+                ser.write(b'R')  # Send 'R' for Reset
+                ser.flush()
+        except Exception as e:
+            print(f"Error signaling ESP32: {e}")
+
         start_time = time.time()
         timer_running = False
         paused_elapsed = 0.0

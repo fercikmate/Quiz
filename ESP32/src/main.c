@@ -18,6 +18,9 @@ const gpio_num_t button_gpios[] = {BUTTON_GPIO27, BUTTON_GPIO33,
 // Bitmask to track which buttons have been pressed
 uint8_t buttons_pressed_bitmask = 0;
 
+// Initialize last states to LOW
+int last_button_states[NUM_BUTTONS] = {0};
+
 // Task handles for the signal sending task
 TaskHandle_t xSenderHandle = NULL;
 void vListenTask(void *pvParameters)
@@ -34,8 +37,6 @@ void vListenTask(void *pvParameters)
         gpio_set_pull_mode(button_gpios[i], GPIO_PULLDOWN_ONLY);
     }
 
-    // Initialize last states to LOW
-    int last_button_states[NUM_BUTTONS] = {0};
     for (;;)
     {
         // Read button state once per session and update bitmask
@@ -73,6 +74,23 @@ void vSendSignal(void *pvParameters)
     }
 }
 
+void vReceiveSignal(void *pvParameters)
+{
+    for (;;)
+    {
+        int c = getchar();
+        if (c == 'R')
+        {
+            ESP_LOGI("SYSTEM", "Reset signal received from Python!");
+            for (int i = 0; i < NUM_BUTTONS; i++)
+            {
+                last_button_states[i] = 0; // Allow buttons to be pressed again
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
+}
+
 void app_main()
 {
 
@@ -95,11 +113,6 @@ void app_main()
     // ESP_LOGI(BUTTON13, "Stack high water mark: %u words", stackMark);
     uxTaskGetStackHighWaterMark(xHandle);
 
-    if (xReturned == pdPASS)
-    {
-        /* The task was created. Use the task's handle to delete the task. */
-        // vTaskDelete(xHandle);
-    }
     // task to send signal from listening task
     xReturned = xTaskCreatePinnedToCore(
         vSendSignal, /* Function that implements the task. */
@@ -111,12 +124,8 @@ void app_main()
         0); /* Pin task to core 0. */
 
     // get the high water mark of the stack, which is the minimum amount of stack that has remained for the task since it was created. This is useful for debugging and optimizing stack usage.
+    xTaskCreatePinnedToCore(vReceiveSignal, "Receiver", 2048, NULL, 1, NULL, 0);
 
-    if (xReturned == pdPASS)
-    {
-        /* The task was created. Use the task's handle to delete the task. */
-        // vTaskDelete(xHandle);
-    }
     while (1)
     {
         vTaskDelay(pdMS_TO_TICKS(1000));
