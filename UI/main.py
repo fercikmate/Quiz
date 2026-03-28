@@ -159,7 +159,7 @@ def show_setup_window():
         
         # Try to open serial port
         try:
-            ser = serial.Serial(com, 9600, timeout=1)
+            ser = serial.Serial(com, 115200, timeout=1)
         except Exception as e:
             messagebox.showerror("Serial Error", f" {str(e)}")
             return

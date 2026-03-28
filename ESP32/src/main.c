@@ -15,7 +15,11 @@ const gpio_num_t button_gpios[] = {BUTTON_GPIO27, BUTTON_GPIO33,
                                    BUTTON_GPIO26, BUTTON_GPIO25, BUTTON_GPIO32};
 #define NUM_BUTTONS (sizeof(button_gpios) / sizeof(button_gpios[0]))
 
+// Bitmask to track which buttons have been pressed
 uint8_t buttons_pressed_bitmask = 0;
+
+// Task handles for the signal sending task
+TaskHandle_t xSenderHandle = NULL;
 void vListenTask(void *pvParameters)
 {
     // Configure LED pin as OUTPUT
@@ -39,9 +43,11 @@ void vListenTask(void *pvParameters)
         {
             if (gpio_get_level(button_gpios[i]) == 1 && last_button_states[i] == 0)
             {
-                buttons_pressed_bitmask |= (1 << i); // Set the bit for this button
+                xTaskNotify(xSenderHandle, (i + 1), eSetValueWithOverwrite);
+                buttons_pressed_bitmask |= (1 << i); // reserve the bit for this button
                 ESP_LOGI("BUTTON_TASK", "Button %d pressed. Bitmask: 0x%02X",
                          button_gpios[i], buttons_pressed_bitmask);
+
                 last_button_states[i] = 1; // Update last state to HIGH
             }
         }
@@ -51,20 +57,20 @@ void vListenTask(void *pvParameters)
 }
 void vSendSignal(void *pvParameters)
 {
+    uint32_t teamReceived;
 
     for (;;)
     {
-        vTaskDelay(pdMS_TO_TICKS(100));
-        // -- Task application code here. --
-    }
+        // Wait forever (portMAX_DELAY) for a notification
+        if (xTaskNotifyWait(0, 0, &teamReceived, portMAX_DELAY) == pdTRUE)
+        {
+            // Print the team (button index + 1)
+            printf("%lu\n", teamReceived);
 
-    /* Tasks must not attempt to return from their implementing
-       function or otherwise exit. In newer FreeRTOS port
-       attempting to do so will result in an configASSERT() being
-       called if it is defined. If it is necessary for a task to
-       exit then have the task call vTaskDelete( NULL ) to ensure
-       its exit is clean. */
-    vTaskDelete(NULL);
+            // Flush the buffer for immediate output
+            fflush(stdout);
+        }
+    }
 }
 
 void app_main()
@@ -73,7 +79,6 @@ void app_main()
     BaseType_t xReturned;
     TaskHandle_t xHandle = NULL;
 
-    /* Create the task, storing the handle. */
     // task to listen for button state
     xReturned = xTaskCreatePinnedToCore(
         vListenTask, /* Function that implements the task. */
@@ -102,7 +107,7 @@ void app_main()
         2048,        /* Stack size in words, not bytes. */
         (void *)1,   /* Parameter passed into the task. */
         1,           /* Priority at which the task is created. */
-        &xHandle,
+        &xSenderHandle,
         0); /* Pin task to core 0. */
 
     // get the high water mark of the stack, which is the minimum amount of stack that has remained for the task since it was created. This is useful for debugging and optimizing stack usage.
