@@ -46,13 +46,14 @@ void vListenTask(void *pvParameters)
             {
                 xTaskNotify(xSenderHandle, (i + 1), eSetValueWithOverwrite);
                 buttons_pressed_bitmask |= (1 << i); // reserve the bit for this button
-                ESP_LOGI("BUTTON_TASK", "Button %d pressed. Bitmask: 0x%02X",
-                         button_gpios[i], buttons_pressed_bitmask);
+                // ESP_LOGI("BUTTON_TASK", "Button %d pressed. Bitmask: 0x%02X",
+                //          button_gpios[i], buttons_pressed_bitmask);
 
                 last_button_states[i] = 1; // Update last state to HIGH
             }
         }
-        vTaskDelay(10 / portTICK_PERIOD_MS); // Small delay for debouncing
+        // pdMS_TO_TICKS is universal, unlike vTaskDelay(1)
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
     vTaskDelete(NULL);
 }
@@ -81,7 +82,7 @@ void vReceiveSignal(void *pvParameters)
         int c = getchar();
         if (c == 'R')
         {
-            ESP_LOGI("SYSTEM", "Reset signal received from Python!");
+            // ESP_LOGI("SYSTEM", "Reset signal received from Python!");
             for (int i = 0; i < NUM_BUTTONS; i++)
             {
                 last_button_states[i] = 0; // Allow buttons to be pressed again
@@ -100,12 +101,12 @@ void app_main()
     // task to listen for button state
     xReturned = xTaskCreatePinnedToCore(
         vListenTask, /* Function that implements the task. */
-        "NAME",      /* Text name for the task. */
+        "Listener",  /* Text name for the task. */
         2048,        /* Stack size in words, not bytes. */
         (void *)1,   /* Parameter passed into the task. */
         1,           /* Priority at which the task is created. */
         &xHandle,
-        1); /* Pin task to core 0. */
+        1); /* Pin task to core 1. */
 
     // get the high water mark of the stack, which is the minimum amount of stack that has remained for the task since it was created. This is useful for debugging and optimizing stack usage.
     uxTaskGetStackHighWaterMark(xHandle);
@@ -116,7 +117,7 @@ void app_main()
     // task to send signal from listening task
     xReturned = xTaskCreatePinnedToCore(
         vSendSignal, /* Function that implements the task. */
-        "NAME",      /* Text name for the task. */
+        "Sender",    /* Text name for the task. */
         2048,        /* Stack size in words, not bytes. */
         (void *)1,   /* Parameter passed into the task. */
         1,           /* Priority at which the task is created. */
@@ -128,6 +129,6 @@ void app_main()
 
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(1000);
     }
 }

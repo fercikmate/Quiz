@@ -8,6 +8,7 @@ import time
 #TODO add sound effects on buzz/reset
 #TODO add keyboard shortcuts for stop/resume and reset
 #TODO add visual effects on buzz (flash team color, etc)
+#TODO add a thread to continuously read serial data without blocking the UI 
 
 # Global configuration variables
 com = 'COM4'
