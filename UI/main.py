@@ -2,12 +2,11 @@ import serial
 import tkinter as tk
 from tkinter import colorchooser, messagebox
 import time
-#TODO send reset signal to mcu
-#TODO reset protocol confirmation from mcu
+
 #TODO add button to setup to reconfigure teams and com port
 #TODO reconnect serial if disconnected
 #TODO add sound effects on buzz/reset
-#TODO add keyboard shortcuts for stop/resume
+#TODO add keyboard shortcuts for stop/resume and reset
 
 # Global configuration variables
 com = 'COM4'
